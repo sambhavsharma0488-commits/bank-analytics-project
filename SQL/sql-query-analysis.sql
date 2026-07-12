@@ -107,15 +107,16 @@ from month_revenue;
 
 
 --Query 11: top customer by revenue 
-select c.name,
-sum(t.txn_amount) as total_revenue
-from transactions as t
-left join customers as c
-on t.customer_id=c.customer_id
-where t.status='Success'
-group by c.name
-order by total_revenue desc
-limit 10;
+SELECT t.customer_id,
+       c.name,
+       ROUND(SUM(t.txn_amount), 0) AS total_revenue
+FROM transactions AS t
+LEFT JOIN customers AS c
+  ON t.customer_id = c.customer_id
+WHERE t.status = 'Success'
+GROUP BY t.customer_id, c.name
+ORDER BY total_revenue DESC
+LIMIT 10;
 
 --Query 12:RFM = Recency, Frequency, Monetary customer segmentation
 select segment,
