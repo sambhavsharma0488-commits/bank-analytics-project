@@ -119,30 +119,32 @@ ORDER BY total_revenue DESC
 LIMIT 10;
 
 --Query 12:RFM = Recency, Frequency, Monetary customer segmentation
-select segment,
-count(*) as total_customer
-from(
-with rfm as (
-select c.name,
-c.customer_id,
-(select max(txn_date) from transactions)::date-max(t.txn_date)::date as recency_days,
-count(t.txn_id) as frequency,
-round(sum(t.txn_amount),0) as monetary
-from transactions as t
-left join customers  as c on
-t.customer_id=c.customer_id
-where status='Success'
-group by c.customer_id,c.name
-)
 
+with rfm as (
+	select c.customer_id,c.name,
+	(select max(txn_date) from transactions)::date-max(txn_date) as recency,
+	count(t.txn_id) as frequency,
+round(sum(t.txn_amount),0) as monetary
+	from transactions as t
+	left join customers as c
+	on t.customer_id=c.customer_id
+	where status='Success'
+	group by c.customer_id,c.name
+),
+
+segments as(
 select *,
     case 
-when recency_days <= 30  and frequency >= 20 and monetary >= 500000 then 'Champion'
-when recency_days <= 60  and frequency >= 10 then 'Loyal'
-when recency_days <= 90  then 'At Risk'
+when recency <= 30  and frequency >= 20 and monetary >= 500000 then 'Champion'
+when recency <= 60  and frequency >= 10 then 'Loyal'
+when recency <= 90  then 'At Risk'
 else 'Lost'
 end as segment
 from rfm
+
 )
-group by segment 
-order by total_customer desc;
+
+select segment,count(*) as total_customer
+from segments 
+group by segment
+order by total_customer desc
